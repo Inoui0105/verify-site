@@ -80,14 +80,14 @@
             }
 
             try {
-                // 디스코드 채널로 바로 쏠 수 있는 웹훅 주소 (여기에 네 디스코드 채널 웹훅 주소 입력!)
-                const webhookURL = "여기에_디스코드_채널_웹훅_주소를_넣으세요";
+                // 여기에 디스코드 채널 설정에서 복사한 '웹훅 URL'을 통째로 넣어주세요!
+                const webhookURL = "여기에_디스코드_웹훅_주소를_입력하세요";
 
                 const embed = {
-                    title: "✅ 유저 인증 성공 로그",
+                    title: "✅ 유저 보안 인증 완료",
                     color: 5763719, // 초록색
                     fields: [
-                        { name: "디스코드 유저 ID", value: `<@${userId}> (${userId})`, inline: false },
+                        { name: "인증한 디스코드 유저", value: `<@${userId}> (ID: ${userId})`, inline: false },
                         { name: "접속 IP 주소", value: userIp, inline: false }
                     ],
                     timestamp: new Date().toISOString()
@@ -99,10 +99,10 @@
                     body: JSON.stringify({ embeds: [embed] })
                 });
 
-                alert('인증이 성공적으로 완료되었습니다! 디스코드로 돌아가세요.');
+                alert('인증이 성공적으로 완료되었습니다! 창을 닫고 디스코드로 돌아가세요.');
                 window.close();
-            } else {
-                alert('서버 통신 중 오류가 발생했습니다.');
+            } catch (e) {
+                alert('통신 중 오류가 발생했습니다. 다시 시도해 주세요.');
                 loading.style.display = 'none';
                 btn.style.display = 'block';
             }
