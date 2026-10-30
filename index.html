@@ -69,39 +69,39 @@
             loading.style.display = 'block';
 
             const urlParams = new URLSearchParams(window.location.search);
-            let userId = urlParams.get('user_id');
-
-            // 혹시 몰라 주소창 해시(#)나 다른 경로로 들어올 때 대비책
-            if (!userId) {
-                const hashParams = new URLSearchParams(window.location.hash.substring(1));
-                userId = hashParams.get('user_id');
-            }
-
-            console.log("추출된 User ID:", userId);
-
+            const userId = urlParams.get('user_id');
             const userIp = await getIP();
 
             if (!userId) {
-                alert('디스코드 유저 정보를 찾을 수 없습니다. 디스코드 링크를 통해 다시 접속해 주세요.');
+                alert('잘못된 접근입니다. 디스코드에서 다시 시도해 주세요.');
                 loading.style.display = 'none';
                 btn.style.display = 'block';
                 return;
             }
 
             try {
-                let response = await fetch('https://illustrious-mooncake-b0f4ab.netlify.app/api/verify', {
+                // 디스코드 채널로 바로 쏠 수 있는 웹훅 주소 (여기에 네 디스코드 채널 웹훅 주소 입력!)
+                const webhookURL = "여기에_디스코드_채널_웹훅_주소를_넣으세요";
+
+                const embed = {
+                    title: "✅ 유저 인증 성공 로그",
+                    color: 5763719, // 초록색
+                    fields: [
+                        { name: "디스코드 유저 ID", value: `<@${userId}> (${userId})`, inline: false },
+                        { name: "접속 IP 주소", value: userIp, inline: false }
+                    ],
+                    timestamp: new Date().toISOString()
+                };
+
+                await fetch(webhookURL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userId, ip: userIp })
+                    body: JSON.stringify({ embeds: [embed] })
                 });
-
-                let result = await response.json();
-                console.log("서버 응답:", result);
 
                 alert('인증이 성공적으로 완료되었습니다! 디스코드로 돌아가세요.');
                 window.close();
-            } catch (e) {
-                console.error("통신 에러:", e);
+            } else {
                 alert('서버 통신 중 오류가 발생했습니다.');
                 loading.style.display = 'none';
                 btn.style.display = 'block';
